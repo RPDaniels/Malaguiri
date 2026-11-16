@@ -147,7 +147,8 @@ function updateSentence(verb, item, name) {
   verb = verb === undefined ? G.verb : verb; item = item === undefined ? G.item : item; name = name === undefined ? (G.hover || '') : name;
   let s = verb ? VERBS.find(v => v[0] === verb)[1] : 'Ir a';
   if (item) s += ' ' + Items[item].name.toLowerCase() + ' ' + PREP[verb || 'usar'];
-  if (name) s += (verb === 'hablar' ? ' con ' : ' ') + name; else if (!verb && !item) s = '';
+  if (item && (!name || name === Items[item].name.toLowerCase())) s += '…';
+  else if (name) s += (verb === 'hablar' ? ' con ' : ' ') + name; else if (!verb && !item) s = '';
   $('#sentence').textContent = s || ' ';
 }
 function renderVerbs() {
