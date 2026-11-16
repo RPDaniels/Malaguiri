@@ -13,7 +13,7 @@ Karen, una guiri escandinava, hereda de una abuela a la que no conoció una casa
 - **Clic derecho**: mirar, sin elegir verbo.
 - **Inventario**: clic en un objeto y luego en otro (o en algo del escenario) para usarlos juntos. Dos clics sobre el mismo objeto lo usan solo.
 - **Flechas amarillas** en los bordes: pasar a la pantalla de al lado.
-- **Mapa** (botón o tecla M): ir directamente a cualquier sitio.
+- **Mapa** (botón o tecla M): volver directamente a cualquier sitio donde ya hayas estado.
 
 La partida se guarda sola en el navegador. En **Partidas** hay seis huecos para guardar y cargar puntos concretos, y un código para llevar la partida a otro dispositivo. «Empezar de nuevo» borra la partida en curso, no los huecos.
 

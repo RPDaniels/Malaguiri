@@ -39,7 +39,7 @@ function applySnapshot(s) {
   if (!s || !Rooms[s.room]) return false;
   G.room = s.room; G.flags = JSON.parse(JSON.stringify(s.flags || {})); G.inv = (s.inv || []).filter(i => Items[i]); G.notes = (s.notes || []).slice();
   const w = Rooms[G.room].walk; G.k.x = Math.max(w.x1, Math.min(w.x2, s.x || w.x1)); G.k.y = Math.max(w.y1, Math.min(w.y2, s.y || w.y1));
-  G.k.walking = false; G.k.face = 'side'; G.verb = null; G.item = null; G.after = null;
+  G.k.walking = false; G.k.face = 'side'; G.verb = null; G.item = null; G.after = null; G.flags['vis_' + G.room] = 1;
   renderVerbs(); renderInv(); updateSentence(); $('#roomname').textContent = Rooms[G.room].name; save(); return true;
 }
 function progreso(f) { return f.final ? 'Fin' : f.acto2_fin ? 'Acto 3' : f.casa_abierta ? 'Acto 2' : 'Acto 1'; }
@@ -273,10 +273,10 @@ function showNotebook() {
 const MapPlaces = [];
 function openMap() {
   if (G.busy || G.inDialog || !flag('casa_abierta')) return;
-  const el = $('#overlay');
-  el.innerHTML = '<div class="sheet mapa"><h2>Mapa de Málaga</h2><p>Todo está a diez minutos. De los de aquí.</p><div class="places">' + MapPlaces.map(p => '<button type="button" class="place' + (p.id === G.room ? ' here' : '') + '" id="go-' + p.id + '">' + p.name + '</button>').join('') + '</div><button type="button" class="verb" id="ov-close">Quedarme aquí</button></div>';
+  const el = $('#overlay'), vistos = MapPlaces.filter(p => p.id === G.room || G.flags['vis_' + p.id]), faltan = MapPlaces.length - vistos.length;
+  el.innerHTML = '<div class="sheet mapa"><h2>Mapa de Málaga</h2><p>' + (faltan ? 'Solo salen los sitios donde ya has estado. Te quedan ' + faltan + ' por descubrir, andando.' : 'Ya conoces toda Málaga. Todo está a diez minutos. De los de aquí.') + '</p><div class="places">' + vistos.map(p => '<button type="button" class="place' + (p.id === G.room ? ' here' : '') + '" id="go-' + p.id + '">' + p.name + '</button>').join('') + '</div><button type="button" class="verb" id="ov-close">Quedarme aquí</button></div>';
   el.hidden = false; $('#ov-close').onclick = () => { el.hidden = true; };
-  MapPlaces.forEach(p => { $('#go-' + p.id).onclick = () => { el.hidden = true; travel(p.id); }; });
+  vistos.forEach(p => { $('#go-' + p.id).onclick = () => { el.hidden = true; travel(p.id); }; });
 }
 const PASEO = ['Diez minutos, decían. Llevo veinte y ya he saludado a seis desconocidos.', 'Cuarenta grados a la sombra. Y la sombra está ocupada.', 'Me han dicho «ahora después». No sé si es ahora o es después.', 'Un señor me ha dicho «illa» tres veces. Creo que es mi nombre aquí.', 'He pedido la hora y me han contado su vida. Sigo sin saber la hora.'];
 async function travel(id) {
@@ -317,6 +317,7 @@ function boot() {
   const fresh = !load();
   renderVerbs(); renderInv(); updateSentence();
   $('#roomname').textContent = Rooms[G.room].name;
+  G.flags['vis_' + G.room] = 1;
   requestAnimationFrame(frame);
   if (window.startGame) window.startGame(fresh);
 }
