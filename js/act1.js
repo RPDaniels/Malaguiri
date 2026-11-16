@@ -59,7 +59,6 @@ async function finActo1() {
   await K('Un retrato sin cara, un corazón cerrado, pinturas secas y un puñado de pesetas.');
   await K('Menuda herencia, abuela. Voy a tener que preguntar por toda Málaga.');
   G.busy = false; save();
-  await overlay('<h2>Fin del Acto 1</h2><p>Karen ha entrado en la casa. Se abre el mapa de Málaga, y con él tres pistas que seguir:</p><ul class="notes"><li><b>El retrato.</b> ¿Quién era el hombre sin cara?</li><li><b>La caja de música.</b> ¿Cómo se abre el corazón?</li><li><b>Mi abuelo.</b> ¿Qué quiso decir Trini con «de Chiquito»?</li></ul><p>Doña María, en el patio, ya tiene algo que decir sobre las tres. Arriba ha aparecido el botón <b>Mapa</b>: toda Málaga está a diez minutos.</p>', 'Seguir paseando');
 }
 
 /* ---------- SALA: calle de la casa (fondo de Rafa) ---------- */
