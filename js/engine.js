@@ -32,6 +32,46 @@ function give(id) { if (!has(id)) { G.inv.push(id); renderInv(); toast('+ ' + It
 function lose(id) { G.inv = G.inv.filter(i => i !== id); if (G.item === id) G.item = null; renderInv(); }
 function addNote(t) { if (!G.notes.includes(t)) { G.notes.push(t); toast('Apuntado en el cuaderno'); } }
 function rot(key, arr) { const k = 'rot_' + key, i = (G.flags[k] || 0) % arr.length; G.flags[k] = i + 1; return arr[i]; }
+/* ---------- partidas guardadas ---------- */
+const SLOTS_KEY = 'retrato-borrado-partidas', NSLOTS = 6;
+function snapshot() { return { room: G.room, flags: G.flags, inv: G.inv, notes: G.notes, x: Math.round(G.k.x), y: Math.round(G.k.y) }; }
+function applySnapshot(s) {
+  if (!s || !Rooms[s.room]) return false;
+  G.room = s.room; G.flags = JSON.parse(JSON.stringify(s.flags || {})); G.inv = (s.inv || []).filter(i => Items[i]); G.notes = (s.notes || []).slice();
+  const w = Rooms[G.room].walk; G.k.x = Math.max(w.x1, Math.min(w.x2, s.x || w.x1)); G.k.y = Math.max(w.y1, Math.min(w.y2, s.y || w.y1));
+  G.k.walking = false; G.k.face = 'side'; G.verb = null; G.item = null; G.after = null;
+  renderVerbs(); renderInv(); updateSentence(); $('#roomname').textContent = Rooms[G.room].name; save(); return true;
+}
+function progreso(f) { return f.final ? 'Fin' : f.acto2_fin ? 'Acto 3' : f.casa_abierta ? 'Acto 2' : 'Acto 1'; }
+function readSlots() { try { const a = JSON.parse(localStorage.getItem(SLOTS_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+function writeSlots(a) { try { localStorage.setItem(SLOTS_KEY, JSON.stringify(a)); return true; } catch (e) { return false; } }
+function encodeSave(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))); }
+function decodeSave(t) { try { return JSON.parse(decodeURIComponent(escape(atob(t.trim())))); } catch (e) { return null; } }
+function openSaves(msg) {
+  if (G.busy || G.inDialog) return;
+  const el = $('#overlay'), slots = readSlots(), esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  let rows = '';
+  for (let i = 0; i < NSLOTS; i++) {
+    const s = slots[i];
+    rows += '<div class="slot"><span class="slot-n">' + (i + 1) + '</span><span class="slot-d">' + (s ? esc(s.desc) : 'Vacía') + '</span>'
+      + '<button type="button" class="place" id="sv-save-' + i + '">' + (s ? 'Sobrescribir' : 'Guardar aquí') + '</button>'
+      + (s ? '<button type="button" class="place" id="sv-load-' + i + '">Cargar</button><button type="button" class="place" id="sv-del-' + i + '">Borrar</button>' : '') + '</div>';
+  }
+  el.innerHTML = '<div class="sheet game-sheet"><h2>Partidas</h2><p class="mg-say" id="sv-msg">' + (msg || 'El juego se guarda solo al avanzar. Aquí puedes guardar puntos concretos y volver a ellos.') + '</p><div class="mg-col">' + rows + '</div>'
+    + '<h2>Llevar la partida a otro dispositivo</h2><p>Copia el código de esta partida, o pega uno para cargarlo.</p><textarea id="sv-code" rows="3" spellcheck="false" aria-label="Código de partida"></textarea>'
+    + '<div class="mg-row"><button type="button" class="place" id="sv-copy">Copiar código de la partida actual</button><button type="button" class="place" id="sv-paste">Cargar el código pegado</button></div>'
+    + '<button type="button" class="verb" id="ov-close">Volver al juego</button></div>';
+  el.hidden = false; $('#ov-close').onclick = () => { el.hidden = true; };
+  const say2 = t => { $('#sv-msg').textContent = t; };
+  for (let i = 0; i < NSLOTS; i++) {
+    $('#sv-save-' + i).onclick = () => { const a = readSlots(), d = new Date(); a[i] = { desc: progreso(G.flags) + ' · ' + Rooms[G.room].name + ' · ' + G.inv.length + ' objetos · ' + d.toLocaleDateString('es-ES') + ' ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }), data: snapshot() }; openSaves(writeSlots(a) ? 'Guardada en el hueco ' + (i + 1) + '.' : 'Este navegador no deja guardar aquí. Usa el código de abajo.'); };
+    const l = $('#sv-load-' + i); if (l) l.onclick = () => { const a = readSlots(); if (a[i] && applySnapshot(a[i].data)) { el.hidden = true; toast('Partida ' + (i + 1) + ' cargada'); } else say2('Esa partida no se puede cargar.'); };
+    const dl = $('#sv-del-' + i); if (dl) dl.onclick = () => { const a = readSlots(); a[i] = null; writeSlots(a); openSaves('Hueco ' + (i + 1) + ' vaciado.'); };
+  }
+  $('#sv-copy').onclick = () => { const code = encodeSave(snapshot()); $('#sv-code').value = code; $('#sv-code').select(); try { navigator.clipboard.writeText(code).then(() => say2('Código copiado. Pégalo en el otro dispositivo.'), () => say2('Código listo en el recuadro: cópialo a mano.')); } catch (e) { say2('Código listo en el recuadro: cópialo a mano.'); } };
+  $('#sv-paste').onclick = () => { const o = decodeSave($('#sv-code').value); if (o && applySnapshot(o)) { el.hidden = true; toast('Partida cargada desde el código'); } else say2('Ese código no es de una partida válida.'); };
+}
+
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify({ room: G.room, flags: G.flags, inv: G.inv, notes: G.notes, x: G.k.x, y: G.k.y })); } catch (e) { /* sin guardado */ } }
 function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (!s) return false; G.room = s.room; G.flags = s.flags || {}; G.inv = s.inv || []; G.notes = s.notes || []; G.k.x = s.x; G.k.y = s.y; return true; } catch (e) { return false; } }
 function wipe() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* nada */ } }
@@ -270,6 +310,7 @@ function boot() {
   cv.addEventListener('mousemove', e => { if (G.busy || G.inDialog) return; const [x, y] = evtPos(e), t = targetAt(x, y); const n = t ? t.name : null; if (n !== G.hover) { G.hover = n; updateSentence(); } cv.style.cursor = t ? 'pointer' : 'crosshair'; });
   cv.addEventListener('mouseleave', () => { G.hover = null; if (!G.busy) updateSentence(); });
   $('#btn-map').onclick = openMap;
+  $('#btn-saves').onclick = () => openSaves();
   document.addEventListener('keydown', e => { if ((e.key === 'm' || e.key === 'M') && $('#overlay').hidden) openMap(); });
   $('#btn-reset').onclick = () => { wipe(); location.reload(); };
   $('#btn-help').onclick = () => overlay('<h2>Cómo se juega</h2><ul class="notes"><li><b>Clic</b> en el escenario: Karen camina.</li><li><b>Verbo + clic</b>: mirar, coger, usar, hablar o dar.</li><li><b>Clic derecho</b>: mirar, sin elegir verbo.</li><li><b>Usar o Dar + objeto del inventario + destino</b>: «Usar palo con olivo».</li><li>Un clic sobre un objeto del inventario lo deja listo para usarlo con otra cosa.</li><li>Clic mientras alguien habla: pasa a la frase siguiente.</li></ul>');

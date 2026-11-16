@@ -65,6 +65,11 @@ button.item:hover, button.item:focus-visible { border-color: var(--farol); outli
 .place:hover, .place:focus-visible { background: #f4c430; outline: none; }
 .place.here { background: #e9dcc0; color: #8a7a55; border-style: dashed; }
 .game-sheet { width: min(96%, 70ch); }
+.slot { display: grid; grid-template-columns: 1.5em 1fr auto auto auto; gap: 6px; align-items: center; border-bottom: 1px dashed #b8892e; padding: 2px 0; }
+.slot-n { color: #8c1b22; font-size: 1.2em; }
+.slot-d { overflow-wrap: anywhere; }
+#sv-code { font: inherit; font-size: .8em; width: 100%; background: #fffaf0; color: #2c2416; border: 2px solid #b8892e; padding: 4px; overflow-wrap: anywhere; }
+@media (max-width: 560px) { .slot { grid-template-columns: 1.5em 1fr; } .slot .place { grid-column: 2; } }
 .mg-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .mg-slot, .mg-line { font: inherit; text-align: left; border: 2px solid #b8892e; background: #fffaf0; color: #2c2416; padding: 0 8px; cursor: pointer; min-height: 1.25em; width: 100%; }
 .mg-slot.fixed { background: #e2d7b8; cursor: default; }
@@ -91,6 +96,7 @@ button.item:hover, button.item:focus-visible { border-color: var(--farol); outli
     <h1>El retrato borrado</h1>
     <span id="roomname"></span>
     <button type="button" class="tool" id="btn-map" hidden>Mapa</button>
+    <button type="button" class="tool" id="btn-saves">Partidas</button>
     <button type="button" class="tool" id="btn-help">Ayuda</button>
     <button type="button" class="tool" id="btn-reset">Empezar de nuevo</button>
   </header>
